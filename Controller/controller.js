@@ -56,9 +56,41 @@ const createNewUserToMongo = async (req, res) => {
     }
 };
 
+
+const getAllMongoUsers = async (req, res) => {
+    try {
+        const users = await userService.getMongoUsers();
+        if (users.message) {
+            res.status(200).json(users)
+        } else {
+            res.json(users)
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const getMongoUserById = async (req, res) => {
+    try {
+        const id = req.params.id;
+        console.log(id)
+        const result = await userService.getMongoUsersbyId(id);
+        if (result.message) {
+            res.status(200).json(users)
+        } else {
+            res.json(result)
+        }
+
+    } catch (error) {
+        res.status(500).json({ error: error.message })
+
+    }
+}
 module.exports = {
     getAllUsers,
     getUserById,
     createNewUser,
-    createNewUserToMongo
+    createNewUserToMongo,
+    getAllMongoUsers,
+    getMongoUserById
 };

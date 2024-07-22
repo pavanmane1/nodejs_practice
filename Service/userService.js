@@ -83,10 +83,52 @@ const createUserMongo = async (data) => {
     }
 };
 
+const getMongoUsers = async () => {
+    try {
+        const dbClient = await connectToMongo();
+        const database = dbClient.db(databaseName);
+        const collection = database.collection(collectionName);
+
+        const users = await collection.find().toArray();
+        if (users.length === 0) {
+            return { message: "No user found" };
+        }
+
+        const allUsers = users.map(user => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone0
+        }));
+
+        return allUsers;
+    } catch (error) {
+        throw new Error(`Error fetching user data: ${error.message}`);
+    }
+};
+const getMongoUsersbyId = async (id) => {
+    try {
+        const dbClient = await connectToMongo();
+        const database = dbClient.db(databaseName);
+        const collection = database.collection(collectionName);
+
+        const userById = await collection.findOne({ id: id });
+        if (userById.length === 0) {
+            return { message: "No user found" };
+        }
+        const users = new User(userById.id, userById.name, userById.email, userById.phone);
+
+        return users;
+    } catch (error) {
+        throw new Error(`Error fetching user data: ${error.message}`);
+    }
+};
 
 module.exports = {
     getUSers,
     getUserById,
     createUser,
     createUserMongo,
+    getMongoUsers,
+    getMongoUsersbyId
 };
