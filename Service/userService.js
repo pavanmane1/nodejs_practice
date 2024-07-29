@@ -66,6 +66,23 @@ const createUser = async (data) => {
     }
 };
 
+
+const updateUser = async (data, id) => {
+    try {
+        const { name, email, phone } = data;
+        const result = await connection.query(
+            'UPDATE hrm.user SET name = $1, email = $2, phone = $3 WHERE id = $4',
+            [name, email, phone, id]
+        );
+        if (result.rowCount === 0) {
+            throw new Error('No user found with the given id');
+        }
+        return result.rows[0];
+    } catch (error) {
+        throw new Error(`Error updating user: ${error.message}`);
+    }
+};
+
 const createUserMongo = async (data) => {
     let dbClient;
     try {
@@ -106,6 +123,7 @@ const getMongoUsers = async () => {
         throw new Error(`Error fetching user data: ${error.message}`);
     }
 };
+
 const getMongoUsersbyId = async (id) => {
     try {
         const dbClient = await connectToMongo();
@@ -130,5 +148,6 @@ module.exports = {
     createUser,
     createUserMongo,
     getMongoUsers,
-    getMongoUsersbyId
+    getMongoUsersbyId,
+    updateUser
 };

@@ -42,6 +42,22 @@ const createNewUser = async (req, res) => {
     }
 };
 
+
+const updateUser = async (req, res) => {
+    try {
+        const userdata = req.body;
+        const id = req.params.id; // fixed the variable to access id correctly
+        const newUser = await userService.updateUser(userdata, id);
+        res.status(200).json({
+            message: "Data updated successfully",
+            user: newUser
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
 const createNewUserToMongo = async (req, res) => {
     try {
         const userdata = req.body;
@@ -92,5 +108,6 @@ module.exports = {
     createNewUser,
     createNewUserToMongo,
     getAllMongoUsers,
-    getMongoUserById
+    getMongoUserById,
+    updateUser
 };
