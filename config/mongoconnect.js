@@ -8,7 +8,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 const databaseName = process.env.DATABASE_NAME;
 const collectionName = process.env.COLLECTION_NAME;
-
+const secretkey = process.env.JWT_SECRET;
 async function connectToMongo() {
     try {
         await client.connect();
@@ -34,5 +34,6 @@ module.exports = {
     connectToMongo,
     closeMongoDBConnection,
     databaseName,
-    collectionName
+    collectionName,
+    secretkey
 };

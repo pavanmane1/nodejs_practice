@@ -72,6 +72,20 @@ const createNewUserToMongo = async (req, res) => {
     }
 };
 
+const registerNewUser = async (req, res) => {
+    try {
+        const userdata = req.body;
+        const newUser = await userService.registerNewUserMongo(userdata);
+        res.status(201).json({
+            message: "Data saved successfully",
+            user: newUser
+        });
+    } catch (error) {
+        console.error("Error creating user:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 
 const getAllMongoUsers = async (req, res) => {
     try {
@@ -102,6 +116,22 @@ const getMongoUserById = async (req, res) => {
 
     }
 }
+const LoginUserMongo = async (req, res) => {
+    try {
+        const userdata = req.body;
+        console.log(userdata)
+        const result = await userService.LoginUserMongo(userdata);
+        if (result.message) {
+            res.status(200).json(result)
+        } else {
+            res.json(result)
+        }
+
+    } catch (error) {
+        res.status(500).json({ error: error.message })
+
+    }
+}
 module.exports = {
     getAllUsers,
     getUserById,
@@ -109,5 +139,7 @@ module.exports = {
     createNewUserToMongo,
     getAllMongoUsers,
     getMongoUserById,
-    updateUser
+    updateUser,
+    registerNewUser,
+    LoginUserMongo
 };

@@ -5,7 +5,8 @@ const PORT = process.env.PORT || 8080;
 const app = express();
 const userRoutes = require("./Routes/userRoutes");
 app.use(bodyParser.json());
-
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 app.use('/', userRoutes);
 
 // Error handling middleware
