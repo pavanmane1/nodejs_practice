@@ -141,7 +141,7 @@ const registerNewUserMongo = async (data) => {
 const getMongoUsers = async () => {
     try {
         const dbClient = await connectToMongo();
-        const database = dbClient.db(databaseName);
+        const database = dbClient.db(databaseName); // Correctly access the database
         const collection = database.collection(collectionName);
 
         const users = await collection.find().toArray();
@@ -150,10 +150,10 @@ const getMongoUsers = async () => {
         }
 
         const allUsers = users.map(user => ({
-            id: user.id,
+            id: user._id,  // Use _id instead of id for MongoDB documents
             name: user.name,
             email: user.email,
-            phone: user.phone0
+            phone: user.phone
         }));
 
         return allUsers;
@@ -161,7 +161,6 @@ const getMongoUsers = async () => {
         throw new Error(`Error fetching user data: ${error.message}`);
     }
 };
-
 const LoginUserMongo = async (data) => {
     try {
 
