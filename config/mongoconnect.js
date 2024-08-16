@@ -1,3 +1,4 @@
+// mongoDB.js
 const { MongoClient } = require('mongodb');
 require('dotenv').config();
 
@@ -17,7 +18,7 @@ async function connectToMongo() {
     try {
         await client.connect();
         console.log("Connected successfully to MongoDB!");
-        return client.db(databaseName); // Return the database instance for further use
+        return client; // Return the MongoClient instance
     } catch (error) {
         console.error("Error connecting to MongoDB:", error.message || error);
         throw new Error('Could not connect to MongoDB.');
