@@ -9,7 +9,7 @@ const app = express();
 
 // Use CORS middleware before defining your routes
 app.use(cors({
-    origin: 'http://localhost:3000', // Allow only your React app's origin
+    origin: 'https://react-stock-manegment-system.onrender.com', // Allow only your React app's origin
     methods: 'GET,POST,PUT,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
     credentials: true // If you need to allow cookies or other credentials
