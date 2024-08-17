@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 
 const getUSers = async () => {
     try {
-        const users = await connection.query('SELECT * FROM hrm.user');
+        const users = await connection.query('SELECT * FROM data.users');
         if (users.rows.length == 0) {
             return { message: "No user found " };
 
@@ -32,7 +32,7 @@ const getUSers = async () => {
 };
 const getUserById = async (id) => {
     try {
-        const userById = await connection.query('SELECT * FROM hrm.user WHERE id = $1', [id]);
+        const userById = await connection.query('SELECT * FROM data.users WHERE id = $1', [id]);
         if (userById.rows.length == 0) {
             return { message: `no user found by : ${id}` }
         }
@@ -55,11 +55,11 @@ const getUserById = async (id) => {
 };
 const createUser = async (data) => {
     try {
-        const { id, name, email, phone } = data;
+        const { id, username, email, phone } = data;
 
         const result = await connection.query(
-            'INSERT INTO hrm.user(id, name, email, phone) VALUES ($1, $2, $3, $4) RETURNING *',
-            [id, name, email, phone]
+            'INSERT INTO data.users(id, username, email, phone) VALUES ($1, $2, $3, $4) RETURNING *',
+            [id, username, email, phone]
         );
         const newUser = result.rows[0];
         return new User(newUser.id, newUser.name, newUser.email, newUser.phone);
@@ -73,7 +73,7 @@ const updateUser = async (data, id) => {
     try {
         const { name, email, phone } = data;
         const result = await connection.query(
-            'UPDATE hrm.user SET name = $1, email = $2, phone = $3 WHERE id = $4',
+            'UPDATE data.users SET name = $1, email = $2, phone = $3 WHERE id = $4',
             [name, email, phone, id]
         );
         if (result.rowCount === 0) {
@@ -191,7 +191,63 @@ const LoginUserMongo = async (data) => {
     } catch (error) {
         throw new Error(`Error fetching user data: ${error.message}`);
     }
+}; const validateUserMongo = async (data, headers) => {
+    let dbClient;
+    try {
+        // Connect to MongoDB
+        dbClient = await connectToMongo();
+        const database = dbClient.db(databaseName);
+        const collection = database.collection("users");
+
+        const { username, password } = data;
+
+        // Extract token from the Authorization header
+        const authHeader = headers['authorization'];
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return { isAuthenticated: false, message: 'Authorization header is missing or malformed' };
+        }
+        const token = authHeader.split(' ')[1]; // Get the token part
+
+        // Verify the token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, secretkey);
+        } catch (error) {
+            return { isAuthenticated: false, message: 'Invalid or expired token' };
+        }
+
+        // Find the user by username
+        const user = await collection.findOne({ username: username });
+        if (!user) {
+            return { isAuthenticated: false, message: 'User not found' };
+        }
+
+        // Verify the password provided
+        const passwordWithSecretKey = password + secretkey;
+        const isPasswordMatch = await bcrypt.compare(passwordWithSecretKey, user.password);
+        if (!isPasswordMatch) {
+            return { isAuthenticated: false, message: 'Invalid credentials' };
+        }
+
+        // Ensure the password in the token matches the user's password
+        const tokenPasswordWithSecretKey = password + secretkey;
+        const isTokenPasswordMatch = await bcrypt.compare(tokenPasswordWithSecretKey, user.password);
+        if (!isTokenPasswordMatch) {
+            return { isAuthenticated: false, message: 'Token password does not match the user' };
+        }
+
+        // If all checks pass
+        return { isAuthenticated: true, message: 'User validated successfully' };
+    } catch (error) {
+        throw new Error(`Error validating user: ${error.message}`);
+    } finally {
+        // Ensure the database client is closed after the operation
+        if (dbClient) {
+            await dbClient.close();
+        }
+    }
 };
+
 
 const getMongoUsersbyId = async (id) => {
     try {
@@ -220,5 +276,7 @@ module.exports = {
     getMongoUsersbyId,
     updateUser,
     registerNewUserMongo,
-    LoginUserMongo
+    LoginUserMongo,
+    validateUserMongo
+
 };

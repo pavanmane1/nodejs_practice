@@ -132,6 +132,28 @@ const LoginUserMongo = async (req, res) => {
 
     }
 }
+
+
+const validatedUserMongo = async (req, res) => {
+    try {
+        const userdata = req.body;
+        const headers = req.headers;
+
+        console.log(userdata);
+
+        // Pass both userdata and headers to the validation function
+        const result = await userService.validateUserMongo(userdata, headers);
+
+        if (result.message) {
+            res.status(200).json(result);
+        } else {
+            res.json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getAllUsers,
     getUserById,
@@ -141,5 +163,6 @@ module.exports = {
     getMongoUserById,
     updateUser,
     registerNewUser,
-    LoginUserMongo
+    LoginUserMongo,
+    validatedUserMongo
 };

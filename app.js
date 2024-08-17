@@ -15,6 +15,15 @@ app.use(cors({
     credentials: true // If you need to allow cookies or other credentials
 }));
 
+//for testing un comment it
+// app.use(cors({
+//     origin: 'http://localhost:3000', // Allow only your React app's origin
+//     methods: 'GET,POST,PUT,DELETE',
+//     allowedHeaders: 'Content-Type,Authorization',
+//     credentials: true // If you need to allow cookies or other credentials
+// }));
+
+
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

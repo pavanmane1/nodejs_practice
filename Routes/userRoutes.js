@@ -10,5 +10,6 @@ router.put("/user/:id", userController.updateUser);
 router.post("/mongouser", userController.createNewUserToMongo)
 router.post("/newuser", userController.registerNewUser)
 router.post("/login", userController.LoginUserMongo)
+router.post("/validatelogin", userController.validatedUserMongo)
 router.get("/mongousers/:id", userController.getMongoUserById)
 module.exports = router;
