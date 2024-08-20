@@ -4,6 +4,8 @@ const MongoUser = require('../Model/usermongoSchema');
 const { connectToMongo, databaseName, collectionName, secretkey } = require('../config/mongoconnect');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require("uuid");
+const { connect } = require('../Routes/userRoutes');
 
 const getUSers = async () => {
     try {
@@ -67,10 +69,27 @@ const createUser = async (data) => {
         throw new Error(`Error creating user: ${error.message}`);
     }
 };
-
+const createUserServerdb = async (data) => {
+    try {
+        const uuid = uuidv4();
+        const { username, password, mobile, } = data;
+        const passwordwitsecretkey = password + secretkey;
+        const salt = await bcrypt.genSalt(10);
+        const hashPassword = await bcrypt.hash(passwordwitsecretkey, salt);
+        const result = await connection.query(
+            'INSERT INTO public.users(id, username, password, mobile ) VALUES ($1, $2, $3,$4 ) RETURNING *',
+            [uuid, username, hashPassword, mobile]
+        );
+        const newUser = result.rows[0];
+        return new User(newUser.username, newUser.password, newUser.mobile);
+    } catch (error) {
+        throw new Error(`Error creating user: ${error.message}`);
+    }
+};
 
 const updateUser = async (data, id) => {
     try {
+
         const { name, email, phone } = data;
         const result = await connection.query(
             'UPDATE data.users SET name = $1, email = $2, phone = $3 WHERE id = $4',
@@ -162,36 +181,8 @@ const getMongoUsers = async () => {
     }
 };
 
-const LoginUserMongo = async (data) => {
-    try {
 
-        const dbClient = await connectToMongo();
-        const database = dbClient.db(databaseName);
-        const collection = database.collection("users");
-        const { username, password } = data;
-        const user = await collection.findOne({ username: username });
-
-        if (!user) {
-            return { loginstatus: false, message: 'User not found' };
-        }
-
-        // Combine the password with the secret key before comparing
-        const passwordWithSecretKey = password + secretkey;
-
-        // Compare the combined password and secret key with the stored hash
-        const isMatch = await bcrypt.compare(passwordWithSecretKey, user.password);
-
-        if (!isMatch) {
-            return { loginstatus: false, message: 'Invalid credentials' };
-        } else {
-            // Generate a JWT token if the password is correct
-            const token = jwt.sign({ id: user._id }, secretkey, { expiresIn: '1h' });
-            return { loginstatus: true, message: 'Login successful', token };
-        }
-    } catch (error) {
-        throw new Error(`Error fetching user data: ${error.message}`);
-    }
-}; const validateUserMongo = async (data, headers) => {
+const validateUserMongo = async (data, headers) => {
     let dbClient;
     try {
         // Connect to MongoDB
@@ -276,7 +267,7 @@ module.exports = {
     getMongoUsersbyId,
     updateUser,
     registerNewUserMongo,
-    LoginUserMongo,
-    validateUserMongo
+    validateUserMongo,
+    createUserServerdb
 
 };

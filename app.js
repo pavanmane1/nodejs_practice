@@ -3,25 +3,25 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const userRoutes = require("./Routes/userRoutes");
-
+const routes = require('./Routes/routes')
 const PORT = process.env.PORT || 8080;
 const app = express();
 
 // Use CORS middleware before defining your routes
-app.use(cors({
-    origin: 'https://react-stock-manegment-system.onrender.com', // Allow only your React app's origin
-    methods: 'GET,POST,PUT,DELETE',
-    allowedHeaders: 'Content-Type,Authorization',
-    credentials: true // If you need to allow cookies or other credentials
-}));
-
-//for testing un comment it
 // app.use(cors({
-//     origin: 'http://localhost:3000', // Allow only your React app's origin
+//     origin: 'https://react-stock-manegment-system.onrender.com', // Allow only your React app's origin
 //     methods: 'GET,POST,PUT,DELETE',
 //     allowedHeaders: 'Content-Type,Authorization',
 //     credentials: true // If you need to allow cookies or other credentials
 // }));
+
+//for testing un comment it
+app.use(cors({
+    origin: 'http://localhost:3000', // Allow only your React app's origin
+    methods: 'GET,POST,PUT,DELETE',
+    allowedHeaders: 'Content-Type,Authorization',
+    credentials: true // If you need to allow cookies or other credentials
+}));
 
 
 app.use(bodyParser.json());
@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser()); // Use cookie-parser
 
 // Routes
-app.use('/', userRoutes);
+app.use('/api', routes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
