@@ -5,7 +5,6 @@ const { connectToMongo, databaseName, collectionName, secretkey } = require('../
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require("uuid");
-const { connect } = require('../Routes/userRoutes');
 
 const authService = {
 
@@ -59,7 +58,7 @@ const authService = {
                 return { loginstatus: false, message: 'Invalid credentials' };
             } else {
                 // Generate a JWT token if the password is correct
-                const token = jwt.sign({ id: user._id }, secretkey, { expiresIn: '1h' });
+                const token = jwt.sign({ id: user._id }, secretkey, { expiresIn: '5m' });
                 return { loginstatus: true, message: 'Login successful', token };
             }
         } catch (error) {

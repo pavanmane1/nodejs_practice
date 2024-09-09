@@ -1,5 +1,5 @@
 class User {
-    constructor(username, password, mobile) {
+    UserRoleconstructor(username, password, mobile) {
 
         this.username = username;
         this.password = password;

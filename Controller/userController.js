@@ -13,6 +13,19 @@ const getAllUsers = async (req, res) => {
     }
 };
 
+const getUserRoles = async (req, res) => {
+    try {
+        const usersroles = await userService.getUserRoles();
+        if (usersroles.message) {
+            res.status(200).json(usersroles)
+        } else {
+            res.json(usersroles)
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 const getUserById = async (req, res) => {
     try {
         const id = req.params.id;
@@ -150,7 +163,43 @@ const validatedUserMongo = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+const getUserDesignations = async (req, res) => {
+    try {
+        const usersroles = await userService.getUserDesignation();
+        if (usersroles.message) {
+            res.status(200).json(usersroles)
+        } else {
+            res.json(usersroles)
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+const registerNewEmployee = async (req, res) => {
+    try {
+        const userdata = req.body;
+        const newUser = await userService.createNewEmployeeDetails(userdata);
+        res.status(201).json({
+            message: "Data saved successfully",
+            user: newUser
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 
+const getEmployeeeDetails = async (req, res) => {
+    try {
+        const employeeDetails = await userService.getEmployeeeDetails();
+        if (employeeDetails.message) {
+            res.status(200).json(employeeDetails)
+        } else {
+            res.json(employeeDetails)
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 module.exports = {
     getAllUsers,
     getUserById,
@@ -162,4 +211,8 @@ module.exports = {
     registerNewUser,
     validatedUserMongo,
     createNewUsertoServerdb,
+    getUserRoles,
+    getUserDesignations,
+    registerNewEmployee,
+    getEmployeeeDetails
 };

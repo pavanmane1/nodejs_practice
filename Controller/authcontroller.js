@@ -1,7 +1,7 @@
 const authService = require('../Service/authService');
 const authController = {
 
-     LoginUsertopg: async (req, res) => {
+    LoginUsertopg: async (req, res) => {
         try {
             const userdata = req.body;
             console.log(userdata)

@@ -1,11 +1,14 @@
 const connection = require('../config/dbconnect');
 const User = require('../Model/userModel');
+const UserRoles = require('../Model/userRoleModel');
 const MongoUser = require('../Model/usermongoSchema');
+const Designation = require('../Model/designationmodel')
 const { connectToMongo, databaseName, collectionName, secretkey } = require('../config/mongoconnect');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require("uuid");
-const { connect } = require('../Routes/userRoutes');
+const { v4: uuidv4 } = require('uuid');
+const Joi = require('joi')
+
 
 const getUSers = async () => {
     try {
@@ -16,6 +19,33 @@ const getUSers = async () => {
         }
         const allUser = users.rows.map(row => new User(row.id, row.name, row.email, row.phone));
         return allUser;
+
+    } catch (error) {
+        throw new Error(`Error  fetching user data : ${error.message}`)
+    }
+
+    // return new Promise((resolve, reject) => {
+    //     connect.query('SELECT * FROM hrm.user', (error, result) => {
+    //         if (error) {
+    //             reject(error);
+    //         } else {
+    //             const allUsers = result.rows.map(rows => new User(rows.id, rows.name, rows.email, rows.phone));
+    //             resolve(allUsers);
+    //         }
+    //     });
+    // });
+};
+
+const getUserRoles = async () => {
+    try {
+        const users = await connection.query('SELECT * FROM public.acl_role');
+        if (users.rows.length == 0) {
+            return { message: "No user found " };
+
+        }
+        console.log(users.rows[0])
+        const userRoles = users.rows.map(row => new UserRoles(row.id, row.createdby, row.rolename, row.caption));
+        return userRoles;
 
     } catch (error) {
         throw new Error(`Error  fetching user data : ${error.message}`)
@@ -69,10 +99,11 @@ const createUser = async (data) => {
         throw new Error(`Error creating user: ${error.message}`);
     }
 };
+
 const createUserServerdb = async (data) => {
     try {
         const uuid = uuidv4();
-        const { username, password, mobile, } = data;
+        const { username, password, mobile, roleid, } = data;
         const passwordwitsecretkey = password + secretkey;
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(passwordwitsecretkey, salt);
@@ -80,8 +111,16 @@ const createUserServerdb = async (data) => {
             'INSERT INTO public.users(id, username, password, mobile ) VALUES ($1, $2, $3,$4 ) RETURNING *',
             [uuid, username, hashPassword, mobile]
         );
+
+        const userId = result.rows[0].id;
+        const userrole = await connection.query(
+            'INSERT INTO public.acl_user_role(user_id, role_id ) VALUES ($1, $2 ) RETURNING *',
+            [userId, roleid]
+        );
+        const userroledata = userrole.rows[0];
+        console.log(userroledata)
         const newUser = result.rows[0];
-        return new User(newUser.username, newUser.password, newUser.mobile);
+        return new User(newUser.username, newUser.password, newUser.roleid);
     } catch (error) {
         throw new Error(`Error creating user: ${error.message}`);
     }
@@ -258,6 +297,146 @@ const getMongoUsersbyId = async (id) => {
     }
 };
 
+const createNewEmployeeDetails = async (data) => {
+    // Define the schema for validation
+    const schema = Joi.object({
+        id: Joi.string().optional(),
+        employee_id: Joi.string().required(),
+        section_code: Joi.string().required(),
+        designation: Joi.string().required(),
+        honorific_code: Joi.string().optional(),
+        namelast: Joi.string().required(),
+        namefirst: Joi.string().required(),
+        namemiddle: Joi.string().optional(),
+        name: Joi.string().optional(),
+        education: Joi.string().optional(),
+        address1: Joi.string().required(),
+        address2: Joi.string().optional(),
+        city: Joi.string().required(),
+        state: Joi.string().required(),
+        pin: Joi.string().required(),
+        phonenumber: Joi.string().required(),
+        permanentaddress1: Joi.string().optional(),
+        permanentaddress2: Joi.string().optional(),
+        permanentcity: Joi.string().optional(),
+        permanentstate: Joi.string().optional(),
+        dateofleaving: Joi.string().allow(null, '').optional(),
+        dateofjoining: Joi.date().required(),
+        initials: Joi.string().optional(),
+        employeetype_code: Joi.string().required(),
+        paytype_code: Joi.string().required(),
+        epf_number: Joi.string().optional(),
+        ppf_number: Joi.string().optional(),
+        pan_number: Joi.string().optional(),
+        email_id: Joi.string().email().required(),
+        pl: Joi.number().optional(),
+        cl: Joi.number().optional(),
+        ml: Joi.number().optional(),
+        isclosed: Joi.boolean().optional(),
+        isdeleted: Joi.boolean().optional(),
+        pettycashaccount_id: Joi.string().optional(),
+    });
+
+    const { error } = schema.validate(data);
+    if (error) {
+        throw new Error(`Validation error: ${error.details[0].message}`);
+    }
+
+    // Create a new client instance and connect to the database
+
+    await connection.connect();
+
+    try {
+        // Start a transaction
+        await connection.query('BEGIN');
+
+        // Extract keys and values from data object
+        const keys = Object.keys(data);
+        const values = Object.values(data);
+
+        // Generate the placeholders dynamically
+        const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+
+        // Create the dynamic query
+        const query = `
+            INSERT INTO public.employee (${keys.join(', ')})
+            VALUES (${placeholders})
+            RETURNING id, namefirst, namelast, email_id, phonenumber;
+        `;
+
+        // Execute the query
+        const result = await connection.query(query, values);
+
+        // Commit the transaction
+        await connection.query('COMMIT');
+
+        const newUser = result.rows[0];
+        return {
+            id: newUser.id,
+            name: `${newUser.namefirst} ${newUser.namelast}`,
+            email: newUser.email_id,
+            phone: newUser.phonenumber
+        };
+    } catch (error) {
+        // Rollback in case of an error
+        await connection.query('ROLLBACK');
+        console.error(`Error creating user: ${error.message}`);
+        throw new Error(`Error creating user: ${error.message}`);
+    }
+};
+
+const getUserDesignation = async () => {
+    try {
+        const users = await connection.query('SELECT * FROM public.designation');
+        if (users.rows.length == 0) {
+            return { message: "No user found " };
+
+        }
+
+        const userRoles = users.rows.map(row => new Designation(row.designation_id, row.designation_name, row.description));
+        return userRoles;
+
+    } catch (error) {
+        throw new Error(`Error  fetching user data : ${error.message}`)
+    }
+
+    // return new Promise((resolve, reject) => {
+    //     connect.query('SELECT * FROM hrm.user', (error, result) => {
+    //         if (error) {
+    //             reject(error);
+    //         } else {
+    //             const allUsers = result.rows.map(rows => new User(rows.id, rows.name, rows.email, rows.phone));
+    //             resolve(allUsers);
+    //         }
+    //     });
+    // });
+};
+const getEmployeeeDetails = async () => {
+    try {
+        const employees = await connection.query('SELECT id , name FROM public.employee');
+        if (employees.rows.length == 0) {
+            return { message: "No employee found " };
+
+        }
+        // console.log(users.rows)
+        // const userRoles = users.rows.map(row => new Designation(row.designation_id, row.designation_name, row.description));
+        return employees.rows;
+
+    } catch (error) {
+        throw new Error(`Error  fetching employees data : ${error.message}`)
+    }
+
+    // return new Promise((resolve, reject) => {
+    //     connect.query('SELECT * FROM hrm.user', (error, result) => {
+    //         if (error) {
+    //             reject(error);
+    //         } else {
+    //             const allUsers = result.rows.map(rows => new User(rows.id, rows.name, rows.email, rows.phone));
+    //             resolve(allUsers);
+    //         }
+    //     });
+    // });
+};
 module.exports = {
     getUSers,
     getUserById,
@@ -268,6 +447,9 @@ module.exports = {
     updateUser,
     registerNewUserMongo,
     validateUserMongo,
-    createUserServerdb
-
+    createUserServerdb,
+    getUserRoles,
+    createNewEmployeeDetails,
+    getUserDesignation,
+    getEmployeeeDetails
 };
