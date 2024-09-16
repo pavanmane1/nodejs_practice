@@ -8,20 +8,25 @@ const PORT = process.env.PORT || 8080;
 const app = express();
 
 // Use CORS middleware before defining your routes
-// app.use(cors({
-//     origin: 'https://react-stock-manegment-system.onrender.com', // Allow only your React app's origin
-//     methods: 'GET,POST,PUT,DELETE',
-//     allowedHeaders: 'Content-Type,Authorization',
-//     credentials: true // If you need to allow cookies or other credentials
-// }));
+const allowedOrigins = [
+    'https://react-stock-manegment-system.onrender.com', // Production origin
+    'http://localhost:3000' // Local development origin
+];
 
-//for testing un comment it
 app.use(cors({
-    origin: 'http://localhost:3000', // Allow only your React app's origin
+    origin: function (origin, callback) {
+        // Check if the incoming origin is in the allowedOrigins array or if there's no origin (for non-browser requests)
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: 'GET,POST,PUT,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
-    credentials: true // If you need to allow cookies or other credentials
+    credentials: true // Allow cookies or credentials
 }));
+
 
 
 app.use(bodyParser.json());
