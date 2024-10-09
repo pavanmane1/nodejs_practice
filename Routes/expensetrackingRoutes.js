@@ -3,7 +3,8 @@ const router = express.Router();
 const { expensetrackingController } = require("../Controller/controllers");
 
 // User routes
-router.post('/users', expensetrackingController.createUser);
+router.post('/users', expensetrackingController.createNewUsertoServerdb);
+router.post('/userslogin', expensetrackingController.LoginUsertopg);
 router.get('/users', expensetrackingController.getAllUsers);
 
 // Category routes

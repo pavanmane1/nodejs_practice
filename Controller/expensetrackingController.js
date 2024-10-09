@@ -1,6 +1,34 @@
 
 const expensetrackingServices = require('../Service/expensetrackingServices');
 const expensetrackingController = {
+    LoginUsertopg: async (req, res) => {
+        try {
+            const userdata = req.body;
+            console.log(userdata)
+            const result = await expensetrackingServices.LoginUserToPg(userdata);
+            if (result.message) {
+                res.status(200).json(result)
+            } else {
+                res.json(result)
+            }
+
+        } catch (error) {
+            res.status(500).json({ error: error.message })
+
+        }
+    },
+    createNewUsertoServerdb: async (req, res) => {
+        try {
+            const userdata = req.body;
+            const newUser = await expensetrackingServices.createUserServerdb(userdata);
+            res.status(201).json({
+                message: "Data saved successfully",
+                user: newUser
+            });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
     // Create a new user
     createUser: async (req, res) => {
         try {
